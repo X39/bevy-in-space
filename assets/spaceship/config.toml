@@ -1,0 +1,29 @@
+# !REQUIRED!
+# This text is how your model is named in-game. Spawning it will work via this very name.
+# This must be unique!
+# For Modders, please prefix your identifier with "steamid64/YOUR_STEAM_ID_64/" for maximum compatibility.
+# To get your steamid64 you can use eg. https://steamid.io
+# If you don't have a steamid64, use another unique prefix combination (eg. "e-mail/YOUR_EMAIL_ADDRESS/")
+identifier = "SpaceShip"
+
+
+# Handles how the model is displayed in ui. Note that this is localized and hence the strings
+# refer to the [[localization]] sections and are not free-form text.
+[display]
+title = "model_name"
+description = "model_description"
+
+
+# Localizations for the model. Each [[localization]] section must have a "culture" key!
+[[localization]]
+culture = "en" # !REQUIRED! The culture this localization is for. The format follows the https://www.rfc-editor.org/info/bcp47 RFC.
+string_a = "this is a localized string for the identifier 'string_a'"
+model_name = "Spaceship"
+model_description = "A very special spaceship that was the beginning of everything."
+
+# You can add more localizations by adding more [[localization]] sections.
+[[localization]]
+culture = "de" # !REQUIRED!
+string_a = "Dies ist ein Übersetzter Text für den Identifikator 'string_a'"
+model_name = "Raumschiff"
+model_description = "Ein sehr besonderes Raumschiff, welches am Anfang von allem stand."

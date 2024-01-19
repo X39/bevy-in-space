@@ -12,10 +12,15 @@ opt-level = 0
 
 [dependencies]
 bevy_framepace = "0.14.1"
-big_space = "0.4.0"
+# big_space = "0.4.0"
+# https://discord.com/channels/691052431525675048/1124043933886976171/1189639382941061203
+big_space = { git = "https://github.com/austincummings/big_space.git", branch = "xpbd-compat" }
 log = "0.4.20"
 simple-logging = "2.0.2"
 rand = "0.8.5"
+serde = { version = "1.0.193", features = ["derive"] }
+thiserror = "1.0.56"
+encoding_rs = "0.8.26"
 
 # Enable high optimizations for dependencies (incl. Bevy), but not for our code:
 [profile.dev.package."*"]
@@ -25,6 +30,11 @@ opt-level = 3
 version = "0.12.1"
 features = ["multi-threaded"]
 
-[dependencies.bevy_rapier3d]
-version = "0.23.0"
-features = ["simd-stable", "parallel", "debug-render-3d"]
+[dependencies.bevy_xpbd_3d]
+version = "0.3.3" # Check default features on version upgrade
+default-features = false
+features = ["f64", "3d", "async-collider", "debug-plugin", "parallel"]
+
+[dependencies.rhai]
+version = "1.16.3"
+features = ["serde", "default"]

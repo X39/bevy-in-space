@@ -9,7 +9,6 @@ use bevy::prelude::{Color, Commands, Component, Entity, Gizmos, GlobalTransform,
 use bevy::prelude::shape::UVSphere;
 use bevy::render::render_resource::{Extent3d, TextureDimension, TextureFormat};
 use bevy::utils::default;
-use bevy_rapier3d::na::distance;
 use big_space::{FloatingOrigin, FloatingOriginSettings, GridCell};
 use crate::bevy_stupid::{dvec3_to_vec3, vec3_to_dvec3};
 use crate::common_math::distance3_f64;
@@ -26,7 +25,7 @@ impl Plugin for PlanetsPlugin {
             //.insert_resource(SimulationSpeed(1000.0))
             .add_systems(Startup, (setup_planets))
             .add_systems(Update, (update_planets))
-            .add_systems(PostUpdate, (post_update_planets));
+            .add_systems(PostUpdate, (post_update_planets, log_planets));
     }
 }
 
@@ -193,7 +192,7 @@ fn uv_sun_texture() -> Image {
 }
 
 fn update_planets(
-    floatingOriginSettings: Res<big_space::FloatingOriginSettings>,
+    floating_origin_settings: Res<big_space::FloatingOriginSettings>,
     time: Res<Time>,
     simulation_speed: Res<SimulationSpeed>,
     mut query_self: Query<(Entity, &mut Velocity, &Mass, &Transform, &GridCell<i64>)>,
@@ -206,7 +205,7 @@ fn update_planets(
                 continue;
             }
             let position_self = DVec3::default();
-            let position_other: DVec3 = floatingOriginSettings.grid_position_double::<i64>(
+            let position_other: DVec3 = floating_origin_settings.grid_position_double::<i64>(
                 &(grid_cell_other - grid_cell_self),
                 transform_other,
             ) - vec3_to_dvec3(transform_self.translation);
@@ -323,40 +322,6 @@ fn setup_planets(
         Velocity::new(Vec3::new(0.0, escape_velocity_mps, 0.0)),
         floating_origin_settings.translation_to_grid::<i64>(DVec3::new(0.0, 0.0, -distance_to_sun_m)).0,
     ));
-
-    // Earth using Orbit instead of velocity
-    let material = materials.add(StandardMaterial {
-        base_color_texture: Some(images.add(uv_debug_texture())),
-        ..default()
-    });
-    let mesh = meshes.add(UVSphere {
-        radius: 695700e3,
-        ..default()
-    }.into());
-    let orbit = Orbit {
-        semi_major_axis_m: 149.6e9,
-        eccentricity: 0.5167,
-        inclination_rad: 0.0,
-        argument_of_periapsis_rad: 0.0,
-        longitude_of_ascending_node_rad: 0.0,
-    };
-    for i in 0..100 {
-        let time = i as f64;
-        let position = orbit.calculate_position_f64(time, 1.989e30);
-        info!("Earth {:?}: {:?}", i, position);
-        commands.spawn((
-            PbrBundle {
-                mesh: mesh.clone(),
-                material: material.clone(),
-                transform: Transform::from_translation(floating_origin_settings.translation_to_grid::<i64>(position).1).with_scale(scale),
-                ..default()
-            },
-            Mass::new(mass_kg),
-            Name(format!("Mercury {:?}", i).to_string()),
-            orbit.clone(),
-            floating_origin_settings.translation_to_grid::<i64>(position).0,
-        ));
-    }
 
     // Mars
     let material = materials.add(StandardMaterial {
