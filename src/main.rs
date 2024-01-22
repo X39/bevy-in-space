@@ -5,9 +5,10 @@ mod bevy_stupid;
 mod orbit;
 mod spaceship;
 mod camera;
-mod asset_loaders;
 mod player;
 mod gravity;
+mod gentity;
+mod localization;
 
 use std::io;
 
@@ -50,6 +51,7 @@ fn main() {
             bevy_xpbd_3d::plugins::PhysicsDebugPlugin::default(),
             ))
         .add_plugins((
+            localization::LocalizationPlugin::new("en-US".to_string()),
             solarsystem::PlanetsPlugin,
             // camera::CameraPlugin,
             spaceship::SpaceshipPlugin,

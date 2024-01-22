@@ -1182,7 +1182,7 @@ dependencies = [
 [[package]]
 name = "big_space"
 version = "0.4.0"
-source = "git+https://github.com/austincummings/big_space.git?branch=xpbd-compat#12969ff318d68e7e33b4cae538797bc81a3c8e68"
+source = "git+https://github.com/austincummings/big_space.git?branch=xpbd-compat-ext#8dded16d835838d91a290e4fa69827a046206fa1"
 dependencies = [
  "bevy",
  "bevy-inspector-egui",

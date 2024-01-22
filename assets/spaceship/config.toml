@@ -6,6 +6,8 @@
 # If you don't have a steamid64, use another unique prefix combination (eg. "e-mail/YOUR_EMAIL_ADDRESS/")
 identifier = "SpaceShip"
 
+# !REQUIRED! The path to the gltf file. This is relative to the model file.
+gltf = "spaceship.gltf"
 
 # Handles how the model is displayed in ui. Note that this is localized and hence the strings
 # refer to the [[localization]] sections and are not free-form text.

@@ -14,7 +14,7 @@ opt-level = 0
 bevy_framepace = "0.14.1"
 # big_space = "0.4.0"
 # https://discord.com/channels/691052431525675048/1124043933886976171/1189639382941061203
-big_space = { git = "https://github.com/austincummings/big_space.git", branch = "xpbd-compat" }
+big_space = { git = "https://github.com/austincummings/big_space.git", branch = "xpbd-compat-ext" }
 log = "0.4.20"
 simple-logging = "2.0.2"
 rand = "0.8.5"
