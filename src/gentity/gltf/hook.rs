@@ -1,16 +1,22 @@
 use bevy::core::Name;
-use bevy::ecs::system::EntityCommands;
 use bevy::prelude::*;
+use bevy::render::primitives::Aabb;
 use bevy::scene::SceneInstance;
-use crate::spaceship::{all_component_infos, Spaceship};
+use crate::bevy_stupid::debug_print_components_to_console;
 
 #[derive(Default, Component)]
 pub struct ProcessGEntity;
 
 
+struct GEntityMapEntry {
+    prefix: String,
+    keep_mesh_render: bool,
+    hook: Box<dyn Fn(EntityRef, &mut Commands) + Send + Sync + 'static>,
+}
+
 #[derive(Default, Resource)]
 pub struct GEntityMap {
-    map: Vec<(String, Box<dyn Fn(&mut Commands) + Send + Sync + 'static>)>,
+    map: Vec<GEntityMapEntry>,
 }
 
 impl GEntityMap {
@@ -20,13 +26,17 @@ impl GEntityMap {
         }
     }
 
-    pub fn add(&mut self, prefix: String, hook: Box<dyn Fn(&mut Commands) + Send + Sync + 'static>) {
-        self.map.push((prefix, hook));
+    pub fn add(&mut self, prefix: String, keep_mesh_render: bool, hook: Box<dyn Fn(EntityRef, &mut Commands) + Send + Sync + 'static>) {
+        self.map.push(GEntityMapEntry {
+            prefix,
+            keep_mesh_render,
+            hook,
+        });
     }
 }
 
 
-pub fn setup_gltf_scene(
+pub fn processs_gentity_gltf_scene(
     unloaded_instances: Query<(Entity, &SceneInstance), With<ProcessGEntity>>,
     scene_manager: Res<SceneSpawner>,
     gentity_map: Res<GEntityMap>,
@@ -43,9 +53,18 @@ pub fn setup_gltf_scene(
         for entity_ref in entities.filter_map(|e| world.get_entity(e)) {
             let name_opt = entity_ref.get::<Name>();
             if let Some(name) = name_opt {
-                for (prefix, hook) in gentity_map.map.iter() {
-                    if name.len() > prefix.len() && name.starts_with(prefix) {
-                        (hook)(&mut cmds);
+                for entry in gentity_map.map.iter() {
+                    if name.len() > entry.prefix.len() && name.starts_with(&entry.prefix) {
+                        (entry.hook)(entity_ref, &mut cmds);
+                        if !entry.keep_mesh_render {
+                            cmds.entity(entity_ref.id())
+                                .remove::<Visibility>()
+                                .remove::<InheritedVisibility>()
+                                .remove::<ViewVisibility>()
+                                .remove::<Aabb>()
+                                .remove::<Handle<StandardMaterial>>()
+                                .remove::<Handle<Mesh>>();
+                        }
                     }
                 }
             }

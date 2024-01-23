@@ -8,8 +8,8 @@ use bevy_xpbd_3d::{SubstepSchedule, SubstepSet};
 
 pub struct PlayerPlugin;
 
-const max_slope_angle_f64: f64 = 30.0;
-const max_slope_angle_f32: f32 = 30.0;
+const MAX_SLOPE_ANGLE_F64: f64 = 30.0;
+const MAX_SLOPE_ANGLE_F32: f32 = 30.0;
 
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {

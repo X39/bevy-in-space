@@ -43,9 +43,29 @@ pub fn setup_spaceship(
 
 pub fn move_spaceship_along_x_axis(
     time: Res<Time>,
-    mut query: Query<&mut Transform, (With<Spaceship>)>,
+    mut query: Query<&mut Transform, With<Spaceship>>,
 ) {
-    for mut transform in query.iter_mut() {
+    for (mut transform) in query.iter_mut() {
         transform.translation.x += time.delta_seconds() * 0.25;
+    }
+
+}
+pub fn processs_gentity_gltf_scene(
+    unloaded_instances: Query<(Entity, &SceneInstance), With<Spaceship>>,
+    scene_manager: Res<SceneSpawner>,
+    world: &World,
+    mut cmds: Commands,
+) {
+    for (entity, instance) in unloaded_instances.iter() {
+        if scene_manager.instance_is_ready(**instance) {
+            cmds.entity(entity).remove::<Spaceship>();
+        }
+        let entities = scene_manager
+            .iter_instance_entities(**instance)
+            .chain(std::iter::once(entity));
+        debug_print_components_to_console(world, entity);
+        for entity_ref in entities.filter_map(|e| world.get_entity(e)) {
+            debug_print_components_to_console(world, entity_ref.id());
+        }
     }
 }

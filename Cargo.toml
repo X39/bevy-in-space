@@ -21,6 +21,7 @@ rand = "0.8.5"
 serde = { version = "1.0.193", features = ["derive"] }
 thiserror = "1.0.56"
 encoding_rs = "0.8.26"
+toml = "0.8.8"
 
 # Enable high optimizations for dependencies (incl. Bevy), but not for our code:
 [profile.dev.package."*"]
