@@ -8,6 +8,7 @@ use bevy::scene::{SceneBundle, SceneInstance};
 use bevy::utils::default;
 use bevy::utils::tracing::instrument::WithSubscriber;
 use crate::bevy_stupid::debug_print_components_to_console;
+use crate::gentity::plugin::GEntityBundle;
 
 pub struct SpaceshipPlugin;
 
@@ -29,14 +30,14 @@ pub fn setup_spaceship(
     // Transparency: https://github.com/bevyengine/bevy/discussions/8533
     // ToDo: Export Shader to glsl, then convert to wgsl and add it to the gltf file.
     let (grid_cell, translation) =
-        floating_origin_settings.translation_to_grid::<i64>(DVec3::new(0.0, 0.0, 149.6e9 + 10.0));
+        floating_origin_settings.translation_to_grid::<i64>(DVec3::new(0.0, 0.0, 149.6e9 - 10.0));
     commands.spawn((
-        SceneBundle {
+        GEntityBundle {
             transform: Transform::from_translation(translation),
-            scene: asset_server.load("spaceship\\scene.gltf#Scene0"),
+            toml: asset_server.load("spaceship\\config.toml"),
+            grid_cell,
             ..default()
         },
-        grid_cell,
         Spaceship,
     ));
 }
@@ -46,9 +47,8 @@ pub fn move_spaceship_along_x_axis(
     mut query: Query<&mut Transform, With<Spaceship>>,
 ) {
     for (mut transform) in query.iter_mut() {
-        transform.translation.x += time.delta_seconds() * 0.25;
+        transform.translation.z -= time.delta_seconds() * 0.25;
     }
-
 }
 pub fn processs_gentity_gltf_scene(
     unloaded_instances: Query<(Entity, &SceneInstance), With<Spaceship>>,

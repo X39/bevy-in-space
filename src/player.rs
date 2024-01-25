@@ -168,7 +168,7 @@ fn update_grounded(
         // The character is grounded if the shape caster has a hit with a normal
         // that isn't too steep.
         let is_grounded = hits.iter().any(|hit| {
-            hit.time_of_impact < 0.0001 && rotation.rotate(-hit.normal2).angle_between(Vector::Y).abs() <= max_slope_angle_f64
+            hit.time_of_impact < 0.0001 && rotation.rotate(-hit.normal2).angle_between(Vector::Y).abs() <= MAX_SLOPE_ANGLE_F64
         });
 
         if is_grounded {
@@ -287,7 +287,7 @@ fn kinematic_controller_collisions(
 
             // If the slope isn't too steep to walk on but the character
             // is falling, reset vertical velocity.
-            if normal.angle_between(Vector::Y).abs() <= max_slope_angle_f64 && linear_velocity.y < 0.0
+            if normal.angle_between(Vector::Y).abs() <= MAX_SLOPE_ANGLE_F64 && linear_velocity.y < 0.0
             {
                 linear_velocity.y = linear_velocity.y.max(0.0);
             }

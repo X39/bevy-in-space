@@ -51,11 +51,12 @@ fn main() {
             bevy_xpbd_3d::plugins::PhysicsDebugPlugin::default(),
             ))
         .add_plugins((
+            gentity::plugin::GEntityPlugin,
             localization::LocalizationPlugin::new("en-US".to_string()),
             solarsystem::PlanetsPlugin,
-            // camera::CameraPlugin,
+            camera::CameraPlugin,
+            // player::PlayerPlugin,
             spaceship::SpaceshipPlugin,
-            player::PlayerPlugin,
         ))
         .insert_resource(ClearColor(Color::BLACK))
         .add_systems(Startup, (

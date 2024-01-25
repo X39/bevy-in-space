@@ -1,3 +1,3 @@
-mod asset_loaders;
-mod plugin;
-mod gltf;
+pub(crate) mod asset_loaders;
+pub(crate) mod plugin;
+pub(crate) mod gltf;

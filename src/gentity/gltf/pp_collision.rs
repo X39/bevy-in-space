@@ -10,7 +10,7 @@ pub fn setup_pp_collision(
         if let Some(transform) = transform_opt {
             cmds
                 .entity(entity.id())
-                .insert(RigidBody::Dynamic)
+                .insert(RigidBody::Kinematic) // ToDo: Figure out why Position is not updated and scale is messed up
                 .insert(Collider::cuboid(transform.scale.x as f64, transform.scale.y as f64, transform.scale.z as f64));
         } else {
             warn!("No transform found for entity: {:?}", entity.id());

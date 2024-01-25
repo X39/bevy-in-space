@@ -3,9 +3,13 @@ use bevy::asset::{Asset, AssetApp, AssetLoader, AsyncReadExt, BoxedFuture, LoadC
 use bevy::asset::io::Reader;
 use bevy::prelude::*;
 use bevy::reflect::TypePath;
+use bevy::render::primitives::Aabb;
+use bevy::scene::SceneInstance;
 use thiserror::Error;
 use toml::Table;
 use crate::gentity::asset_loaders::rhai_asset_loader::{RhaiScript};
+use crate::gentity::gltf::hook::{GEntityMap, ProcessGEntity};
+use crate::gentity::plugin::GEntityInitializeFromTomlComponent;
 use crate::localization::Localization;
 
 
@@ -15,6 +19,7 @@ pub struct Plugin;
 impl bevy::app::Plugin for Plugin {
     fn build(&self, app: &mut App) {
         app
+            .init_asset::<TomlAsset>()
             .init_asset_loader::<TomlAssetLoader>()
         ;
     }
@@ -57,8 +62,6 @@ pub enum TomlAssetLoaderError {
     /// An [IO](std::io) Error
     #[error("Could not load asset: {0}")]
     Toml(#[from] toml::de::Error),
-    #[error("Could not create encoding using encoding_rs")]
-    CreatingEncodingFailed,
     #[error("Invalid characters found in script")]
     InvalidCharactersFound(String),
     #[error("Could not read path from asset")]
@@ -77,6 +80,8 @@ pub enum TomlAssetLoaderError {
     OneOrMoreLocalizationsFailedToBeReadAsCultureIsNotAString,
     #[error("One or more localizations failed to be read as culture not found")]
     OneOrMoreLocalizationsFailedToBeReadAsCultureNotFound,
+    #[error("Failed creating gltf path")]
+    FailedCreatingGltfPath,
 }
 
 
@@ -101,7 +106,7 @@ impl AssetLoader for TomlAssetLoader {
                 return Err(TomlAssetLoaderError::ReadingPathFailed);
             };
             let path = path_str.to_string();
-            let base_path = path[..path.rfind("/").unwrap_or(0)].to_string();
+            let base_path = path[..path.rfind("/").unwrap_or(path.rfind("\\").unwrap_or(0))].to_string();
 
             // Load script contents
             let mut bytes = Vec::new();
@@ -109,13 +114,10 @@ impl AssetLoader for TomlAssetLoader {
             if result == 0 {
                 return Err(TomlAssetLoaderError::EmptyFile);
             }
-            let encoding_opt = encoding_rs::Encoding::for_bom(bytes.as_slice());
-            let Some((encoding, _)) = encoding_opt else {
-                return Err(TomlAssetLoaderError::CreatingEncodingFailed);
-            };
-            let (text, _, success) = encoding.decode(bytes.as_slice());
+            let encoding = encoding_rs::UTF_8;
+            let (text, _, has_malformed_characters) = encoding.decode(bytes.as_slice());
             let script = text.to_string();
-            if !success {
+            if has_malformed_characters {
                 return Err(TomlAssetLoaderError::InvalidCharactersFound(script));
             }
 
@@ -133,10 +135,13 @@ impl AssetLoader for TomlAssetLoader {
                 Err(value) => return Err(value),
             };
 
-            let gltf_asset = Self::load_gltf_assets(load_context, &base_path, &gltf);
+            let gltf_asset = match Self::load_gltf_assets(load_context, &base_path, &gltf) {
+                Ok(value) => value,
+                Err(value) => return Err(value),
+            };
 
             // Read all script assets in base_path/scripts
-            let script_assets = match Self::load_script_assets(load_context, base_path) {
+            let script_assets = match Self::load_script_assets(load_context, &base_path) {
                 Ok(value) => value,
                 Err(value) => return Err(value),
             };
@@ -255,9 +260,8 @@ impl TomlAssetLoader {
         display
     }
 
-    fn load_script_assets(load_context: &mut LoadContext, base_path: String) -> Result<Vec<Handle<RhaiScript>>, TomlAssetLoaderError> {
-        let scripts_path = format!("{}/scripts", base_path);
-        let scripts_path = std::path::Path::new(&scripts_path);
+    fn load_script_assets(load_context: &mut LoadContext, base_path: &String) -> Result<Vec<Handle<RhaiScript>>, TomlAssetLoaderError> {
+        let scripts_path = std::path::Path::new(base_path).join("scripts");
         let mut script_assets = Vec::new();
         if scripts_path.exists() {
             for entry in std::fs::read_dir(scripts_path)? {
@@ -275,10 +279,15 @@ impl TomlAssetLoader {
         Ok(script_assets)
     }
 
-    fn load_gltf_assets(load_context: &mut LoadContext, base_path: &String, gltf: &String) -> Handle<Scene> {
-        let gltf_path = format!("{}/{}.gltf", base_path, gltf);
+    fn load_gltf_assets(load_context: &mut LoadContext, base_path: &String, gltf: &String) -> Result<Handle<Scene>, TomlAssetLoaderError> {
+        let gltf_path = std::path::Path::new(base_path).join(gltf);
+        let gltf_path = gltf_path.to_str();
+        let Some(gltf_path) = gltf_path else {
+            return Err(TomlAssetLoaderError::FailedCreatingGltfPath);
+        };
+        let gltf_path = gltf_path.to_string() + "#Scene0";
         let gltf_asset: Handle<Scene> = load_context.load(gltf_path);
-        gltf_asset
+        Ok(gltf_asset)
     }
 
     fn read_gltf_from_toml(table: &Table) -> Result<String, TomlAssetLoaderError> {
@@ -319,12 +328,35 @@ pub fn toml_asset_changed(
                 let Some(toml_asset) = opt else {
                     panic!("TOML asset should be loaded at this point but it isn't");
                 };
-                for asset_localization in toml_asset.localizations {
-                    for entry in asset_localization.entries {
-                        localization.set(&asset_localization.culture, entry.key, entry.value);
+                for asset_localization in &toml_asset.localizations {
+                    for entry in &asset_localization.entries {
+                        localization.set(&asset_localization.culture, entry.key.clone(), entry.value.clone());
                     }
                 }
             }
+        }
+    }
+}
+
+pub fn process_gentity_toml_file(
+    unloaded_instances: Query<(Entity, &Transform, &Handle<TomlAsset>), With<GEntityInitializeFromTomlComponent>>,
+    assets: Res<Assets<TomlAsset>>,
+    mut cmds: Commands,
+) {
+    for (entity, transform, toml_asset_handle) in unloaded_instances.iter() {
+        if let Some(asset) = assets.get(toml_asset_handle) {
+            cmds
+                .entity(entity)
+                .remove::<GEntityInitializeFromTomlComponent>()
+                .remove::<Transform>()
+                .insert(SceneBundle {
+                    transform: transform.clone(),
+                    scene: asset.gltf_asset.clone(),
+                    ..default()
+                })
+                .insert(ProcessGEntity)
+            ;
+            // ToDo: Handle rhai scripts
         }
     }
 }

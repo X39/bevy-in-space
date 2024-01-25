@@ -4,6 +4,7 @@ use bevy::asset::io::Reader;
 use bevy::reflect::TypePath;
 use thiserror::Error;
 use serde::{Deserialize, Serialize};
+use crate::gentity::asset_loaders::toml_asset_loader::TomlAssetLoaderError;
 // https://github.com/TheLeonsver1/bevy_rhai/blob/master/examples/minimal.rs
 
 
@@ -11,7 +12,11 @@ use serde::{Deserialize, Serialize};
 pub struct Plugin;
 impl bevy::app::Plugin for Plugin {
     fn build(&self, app: &mut App) {
-        app.init_asset_loader::<RhaiAssetLoader>();
+
+        app
+            .init_asset::<RhaiScript>()
+            .init_asset_loader::<RhaiAssetLoader>()
+        ;
     }
 }
 
@@ -27,8 +32,6 @@ pub enum RhaiAssetLoaderError {
     /// An [IO](std::io) Error
     #[error("Could not load asset: {0}")]
     Io(#[from] std::io::Error),
-    #[error("Could not create encoding using encoding_rs")]
-    CreatingEncodingFailed,
     #[error("Invalid characters found in script")]
     InvalidCharactersFound(String),
     #[error("Could not read path from asset")]
@@ -66,13 +69,10 @@ impl AssetLoader for RhaiAssetLoader {
                     path,
                 });
             }
-            let encoding_opt = encoding_rs::Encoding::for_bom(bytes.as_slice());
-            let Some((encoding, _)) = encoding_opt else {
-                return Err(RhaiAssetLoaderError::CreatingEncodingFailed);
-            };
-            let (text, _, success) = encoding.decode(bytes.as_slice());
+            let encoding = encoding_rs::UTF_8;
+            let (text, _, has_malformed_characters) = encoding.decode(bytes.as_slice());
             let script = text.to_string();
-            if !success {
+            if has_malformed_characters {
                 return Err(RhaiAssetLoaderError::InvalidCharactersFound(script));
             }
 

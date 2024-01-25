@@ -24,11 +24,11 @@ pub fn print_collisions(
     mut collision_ended_event_reader: EventReader<CollisionEnded>,
 ) {
     for Collision(contacts) in collision_event_reader.read() {
-        println!(
-            "Entities {:?} and {:?} are colliding",
-            contacts.entity1,
-            contacts.entity2,
-        );
+        // println!(
+        //     "Entities {:?} and {:?} are colliding",
+        //     contacts.entity1,
+        //     contacts.entity2,
+        // );
     }
 
     for CollisionStarted(entity1, entity2) in collision_started_event_reader.read() {
