@@ -7,6 +7,7 @@ use bevy::prelude::*;
 use bevy::scene::{SceneBundle, SceneInstance};
 use bevy::utils::default;
 use bevy::utils::tracing::instrument::WithSubscriber;
+use bevy_xpbd_3d::prelude::Position;
 use crate::bevy_stupid::debug_print_components_to_console;
 use crate::gentity::plugin::GEntityBundle;
 
@@ -44,10 +45,10 @@ pub fn setup_spaceship(
 
 pub fn move_spaceship_along_x_axis(
     time: Res<Time>,
-    mut query: Query<&mut Transform, With<Spaceship>>,
+    mut query: Query<&mut Position, With<Spaceship>>,
 ) {
     for (mut transform) in query.iter_mut() {
-        transform.translation.z -= time.delta_seconds() * 0.25;
+        transform.z -= time.delta_seconds_f64() * 0.25;
     }
 }
 pub fn processs_gentity_gltf_scene(
