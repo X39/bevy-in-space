@@ -11,7 +11,7 @@ pub struct ProcessGEntity;
 struct GEntityMapEntry {
     prefix: String,
     keep_mesh_render: bool,
-    hook: Box<dyn Fn(EntityRef, &mut Commands) + Send + Sync + 'static>,
+    hook: Box<dyn Fn(Entity, EntityRef, &mut Commands) + Send + Sync + 'static>,
 }
 
 #[derive(Default, Resource)]
@@ -26,7 +26,7 @@ impl GEntityMap {
         }
     }
 
-    pub fn add(&mut self, prefix: String, keep_mesh_render: bool, hook: Box<dyn Fn(EntityRef, &mut Commands) + Send + Sync + 'static>) {
+    pub fn add(&mut self, prefix: String, keep_mesh_render: bool, hook: Box<dyn Fn(Entity, EntityRef, &mut Commands) + Send + Sync + 'static>) {
         self.map.push(GEntityMapEntry {
             prefix,
             keep_mesh_render,
@@ -55,7 +55,7 @@ pub fn processs_gentity_gltf_scene(
             if let Some(name) = name_opt {
                 for entry in gentity_map.map.iter() {
                     if name.len() > entry.prefix.len() && name.starts_with(&entry.prefix) {
-                        (entry.hook)(entity_ref, &mut cmds);
+                        (entry.hook)(entity, entity_ref, &mut cmds);
                         if !entry.keep_mesh_render {
                             cmds.entity(entity_ref.id())
                                 .remove::<Visibility>()

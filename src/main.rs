@@ -19,7 +19,7 @@ use bevy::{
     window::{CursorGrabMode, PrimaryWindow, Window, WindowMode},
 };
 use bevy::math::DVec3;
-use bevy_xpbd_3d::plugins::{BroadPhasePlugin, ContactReportingPlugin, IntegratorPlugin, NarrowPhasePlugin, PhysicsSetupPlugin, PreparePlugin, SleepingPlugin, SolverPlugin, SpatialQueryPlugin, SyncPlugin};
+use bevy_xpbd_3d::prelude::*;
 use big_space::{
     camera::{CameraController, CameraInput},
     FloatingOrigin, GridCell,
@@ -50,6 +50,7 @@ fn main() {
             big_space::bevy_xpbd::floating_origin_sync::FloatingOriginSyncPlugin::<i64>::new(PostUpdate),
             bevy_xpbd_3d::plugins::PhysicsDebugPlugin::default(),
             ))
+        .insert_resource(Gravity(DVec3::ZERO))
         .add_plugins((
             gentity::plugin::GEntityPlugin,
             localization::LocalizationPlugin::new("en-US".to_string()),

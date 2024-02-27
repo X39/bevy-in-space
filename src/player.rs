@@ -1,3 +1,4 @@
+use bevy::input::mouse::MouseMotion;
 use bevy::math::DVec3;
 use big_space::FloatingOrigin;
 use bevy::prelude::*;
@@ -20,6 +21,7 @@ impl Plugin for PlayerPlugin {
                 Update,
                 (
                     keyboard_input,
+                    mouse_input,
                     gamepad_input,
                     update_grounded,
                     apply_deferred,
@@ -42,8 +44,9 @@ pub struct Player;
 
 #[derive(Event)]
 pub enum MovementAction {
-    Move(Vector2),
+    Move(Vector),
     Jump,
+    Rotate(Vector),
 }
 
 #[derive(Component)]
@@ -73,14 +76,31 @@ fn keyboard_input(
 
     let horizontal = right as i8 - left as i8;
     let vertical = up as i8 - down as i8;
-    let direction = Vector2::new(horizontal as Scalar, vertical as Scalar).clamp_length_max(1.0);
+    let direction = Vector::new(horizontal as Scalar, 0.0, vertical as Scalar).clamp_length_max(1.0);
 
-    if direction != Vector2::ZERO {
+    if direction != Vector::ZERO {
         movement_event_writer.send(MovementAction::Move(direction));
     }
 
     if keyboard_input.just_pressed(KeyCode::Space) {
         movement_event_writer.send(MovementAction::Jump);
+    }
+
+    if keyboard_input.just_pressed(KeyCode::Q) {
+        movement_event_writer.send(MovementAction::Rotate(Vector::new(0.0, 0.0, -1.0)));
+    }
+
+    if keyboard_input.just_pressed(KeyCode::E) {
+        movement_event_writer.send(MovementAction::Rotate(Vector::new(0.0, 0.0, 1.0)));
+    }
+}
+/// Sends [`MovementAction`] events based on keyboard input.
+fn mouse_input(
+    mut movement_event_writer: EventWriter<MovementAction>,
+    mut cursor_evr: EventReader<CursorMoved>,
+) {
+    for ev in cursor_evr.read() {
+        movement_event_writer.send(MovementAction::Rotate(Vector::new(ev.position.x.into(), ev.position.y.into(), 0.0)));
     }
 }
 
@@ -103,7 +123,7 @@ fn gamepad_input(
 
         if let (Some(x), Some(y)) = (axes.get(axis_lx), axes.get(axis_ly)) {
             movement_event_writer.send(MovementAction::Move(
-                Vector2::new(x as Scalar, y as Scalar).clamp_length_max(1.0),
+                Vector::new(x as Scalar, 0.0, y as Scalar).clamp_length_max(1.0),
             ));
         }
 
@@ -194,23 +214,28 @@ fn movement(
         &MovementAcceleration,
         &JumpImpulse,
         &mut LinearVelocity,
+        &mut AngularVelocity,
         Has<Grounded>,
     )>,
 ) {
     let delta_time = time.delta_seconds_f64();
 
     for event in movement_event_reader.read() {
-        for (movement_acceleration, jump_impulse, mut linear_velocity, is_grounded) in
+        for (movement_acceleration, jump_impulse, mut linear_velocity, mut angular_velocity, is_grounded) in
         &mut controllers
         {
             if is_grounded {
                 match event {
                     MovementAction::Move(direction) => {
                         linear_velocity.x += direction.x * movement_acceleration.0 * delta_time;
-                        linear_velocity.z -= direction.y * movement_acceleration.0 * delta_time;
+                        linear_velocity.y -= direction.y * movement_acceleration.0 * delta_time;
+                        linear_velocity.z -= direction.z * movement_acceleration.0 * delta_time;
                     }
                     MovementAction::Jump => {
                         linear_velocity.y = jump_impulse.0;
+                    }
+                    MovementAction::Rotate(direction) => {
+                        angular_velocity.0 = angular_velocity.0 * *direction;
                     }
                 }
             }

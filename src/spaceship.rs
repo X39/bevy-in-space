@@ -45,7 +45,7 @@ pub fn setup_spaceship(
 
 pub fn move_spaceship_along_x_axis(
     time: Res<Time>,
-    mut query: Query<&mut Position, With<Spaceship>>,
+    mut query: Query<&mut Position, With<Spaceship>>
 ) {
     for (mut transform) in query.iter_mut() {
         transform.z -= time.delta_seconds_f64() * 0.25;

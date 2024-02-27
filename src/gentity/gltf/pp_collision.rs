@@ -5,7 +5,7 @@ use crate::gentity::gltf::hook::GEntityMap;
 pub fn setup_pp_collision(
     mut gentity_map: ResMut<GEntityMap>
 ) {
-    gentity_map.add("collider.".into(), false, Box::new(|entity, cmds| {
+    gentity_map.add("collider.".into(), false, Box::new(|parent, entity, cmds| {
         let transform_opt = entity.get::<Transform>();
         if let Some(transform) = transform_opt {
             let mut cloned_transform = transform.clone();
@@ -14,8 +14,10 @@ pub fn setup_pp_collision(
                 .entity(entity.id())
                 .remove::<Transform>()
                 .insert(cloned_transform)
-                .insert(RigidBody::Kinematic) // ToDo: Figure out why Position is not updated
-                .insert(Collider::cuboid(transform.scale.x as f64, transform.scale.y as f64, transform.scale.z as f64));
+                .insert(RigidBody::Dynamic) // ToDo: Figure out why Position is not updated
+                .insert(Collider::cuboid(transform.scale.x as f64, transform.scale.y as f64, transform.scale.z as f64))
+                .insert(FixedJoint::new(entity.id(), parent))
+            ;
         } else {
             warn!("No transform found for entity: {:?}", entity.id());
         }
