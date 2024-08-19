@@ -27,6 +27,7 @@ pub fn setup_spaceship(
     mut commands: Commands,
     mut floating_origin_settings: Res<big_space::FloatingOriginSettings>,
     asset_server: Res<AssetServer>,
+    mut meshes: ResMut<Assets<Mesh>>,
 ) {
     // Transparency: https://github.com/bevyengine/bevy/discussions/8533
     // ToDo: Export Shader to glsl, then convert to wgsl and add it to the gltf file.
@@ -41,6 +42,14 @@ pub fn setup_spaceship(
         },
         Spaceship,
     ));
+    // commands.spawn((
+    //     PbrBundle {
+    //         transform: Transform::from_translation(translation),
+    //         mesh: meshes.add(shape::Cube { size: 1.0 }.into()),
+    //         ..default()
+    //     },
+    //
+    // ));
 }
 
 pub fn move_spaceship_along_x_axis(

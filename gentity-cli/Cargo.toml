@@ -1,0 +1,15 @@
+[package]
+name = "gentity-cli"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+clap = "4.5.1"
+clap_complete = "4.5.1"
+libflate = "2.0.0"
+log = "0.4.21"
+simplelog = "0.12.2"
+wild = "2.2.1"
+gltf = "1.4.0"

@@ -9,6 +9,7 @@ mod player;
 mod gravity;
 mod gentity;
 mod localization;
+mod fixed_joint_sample;
 
 use std::io;
 
@@ -27,6 +28,9 @@ use big_space::{
 
 fn main() {
     // simple_logging::log_to_file("log.txt", log::LevelFilter::Info);
+    
+    // fixed_joint_sample::main();
+    // return;
 
 
     App::new()
@@ -55,8 +59,8 @@ fn main() {
             gentity::plugin::GEntityPlugin,
             localization::LocalizationPlugin::new("en-US".to_string()),
             solarsystem::PlanetsPlugin,
-            camera::CameraPlugin,
-            // player::PlayerPlugin,
+            // camera::CameraPlugin,
+            player::PlayerPlugin,
             spaceship::SpaceshipPlugin,
         ))
         .insert_resource(ClearColor(Color::BLACK))
